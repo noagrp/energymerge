@@ -85,38 +85,75 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
-        .core { border-radius: 50%; filter: blur(2px); transition: all 0.2s; }
+        /* Sharp Solid Core */
+        .core { 
+            border-radius: 50%; 
+            filter: none; /* Removed blur for sharpness */
+            transition: all 0.2s; 
+            z-index: 2;
+        }
+
+        /* --- RUNNING NEON ANIMATION --- */
+        @keyframes neon-run {
+            0% { border-color: #ffffff; box-shadow: 0 0 5px #fff; }
+            25% { border-color: currentColor; box-shadow: 0 0 15px currentColor; }
+            50% { border-color: #ffffff; box-shadow: 0 0 5px #fff; }
+            75% { border-color: currentColor; box-shadow: 0 0 15px currentColor; }
+            100% { border-color: #ffffff; box-shadow: 0 0 5px #fff; }
+        }
 
         /* --- ENERGY TIER STYLES --- */
-        .t-2 { border: 2px solid #00d4ff; box-shadow: 0 0 15px #00d4ff; } 
-        .t-2 .core { background: #00d4ff; width: 25%; height: 25%; box-shadow: 0 0 15px #00d4ff; }
+        .t-2 { 
+            color: #00d4ff;
+            border: 2px solid #00d4ff; 
+            animation: neon-run 2s linear infinite;
+        } 
+        .t-2 .core { background: #00d4ff; width: 30%; height: 30%; border: 1px solid #fff; }
 
-        .t-4 { border: 2px solid #ff9d47; box-shadow: 0 0 20px #ff9d47; } 
-        .t-4 .core { background: #ff9d47; width: 40%; height: 40%; box-shadow: 0 0 20px #ff9d47; }
+        .t-4 { 
+            color: #ff9d47;
+            border: 2px solid #ff9d47; 
+            animation: neon-run 1.8s linear infinite;
+        } 
+        .t-4 .core { background: #ff9d47; width: 45%; height: 45%; border: 1px solid #fff; }
 
-        .t-8 { border: 2px solid #ffffff; box-shadow: 0 0 25px #ffffff; } 
-        .t-8 .core { background: #fff; width: 55%; height: 55%; box-shadow: 0 0 25px #fff; }
+        .t-8 { 
+            color: #ffffff;
+            border: 2px solid #ffffff; 
+            animation: neon-run 1.5s linear infinite;
+        } 
+        .t-8 .core { background: #fff; width: 55%; height: 55%; border: 1px solid #00d4ff; }
 
-        .t-16 { border: 2px solid #fffb00; box-shadow: 0 0 35px #fffb00; } 
-        .t-16 .core { background: #fffb00; width: 70%; height: 70%; box-shadow: 0 0 35px #fffb00; }
+        .t-16 { 
+            color: #fffb00;
+            border: 2px solid #fffb00; 
+            animation: neon-run 1.2s linear infinite;
+        } 
+        .t-16 .core { background: #fffb00; width: 70%; height: 70%; border: 1px solid #fff; }
 
-        .t-32 { border: 2px solid #00d4ff; box-shadow: 0 0 45px #00d4ff; } 
-        .t-32 .core { background: #fff; width: 85%; height: 85%; box-shadow: 0 0 40px #fff; animation: surge 0.8s infinite alternate; }
+        .t-32 { 
+            color: #00d4ff;
+            border: 2px solid #00d4ff; 
+            animation: neon-run 0.8s linear infinite, surge 0.8s infinite alternate;
+        } 
+        .t-32 .core { background: #fff; width: 85%; height: 85%; border: 2px solid #00d4ff; }
 
         /* RAINBOW OVERDRIVE (MAX) */
         .t-64 { 
+            color: #fff;
             border: 3px solid #fff; 
-            box-shadow: 0 0 60px #fff; 
-            overflow: hidden;
+            animation: neon-run 0.5s linear infinite;
         }
         .t-64 .core { 
             width: 95%; height: 95%; 
             background: linear-gradient(45deg, #ff0000, #ffcc00, #00ff00, #00ffff, #0000ff, #ff00ff);
             background-size: 300% 300%;
             animation: rainbow-flow 2s linear infinite, surge 0.4s infinite alternate;
-            filter: blur(1px);
+            border: 1px solid #fff;
         }
 
         @keyframes rainbow-flow {
@@ -126,12 +163,12 @@
         }
 
         @keyframes surge { 
-            from { transform: scale(0.9); filter: brightness(1); } 
-            to { transform: scale(1.1); filter: brightness(1.6); } 
+            from { transform: scale(0.9); } 
+            to { transform: scale(1.05); } 
         }
 
         .pop { animation: pop 0.3s ease-out; z-index: 10; }
-        @keyframes pop { 0% { transform: scale(0.5); filter: brightness(5); } 100% { transform: scale(1); } }
+        @keyframes pop { 0% { transform: scale(0.5); } 100% { transform: scale(1); } }
 
         /* OVERLAYS */
         #overlay {
@@ -156,8 +193,8 @@
         }
 
         .path { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 10px; }
-        .mini { width: 24px !important; height: 24px !important; border-radius: 4px !important; border-width: 1px !important; box-shadow: none !important; }
-        .mini .core { filter: blur(1px) !important; }
+        .mini { width: 24px !important; height: 24px !important; border-radius: 4px !important; border-width: 1px !important; box-shadow: none !important; animation: none !important;}
+        .mini .core { filter: none !important; }
         .val-text { font-size: 0.6rem; color: #888; font-weight: bold; }
     </style>
 </head>
@@ -267,7 +304,6 @@
                 
                 let filtered = line.filter(v => v);
                 for (let k = 0; k < filtered.length - 1; k++) {
-                    // Only merge if both are identical AND less than 64
                     if (filtered[k] !== 0 && filtered[k] === filtered[k+1] && filtered[k] < 64) {
                         filtered[k] *= 2;
                         filtered[k+1] = 0;
@@ -300,28 +336,19 @@
         }
 
         function checkOver() {
-            // Check for empty spaces
             if (board.includes(0)) return;
-
             let possible = false;
             for (let i = 0; i < size; i++) {
                 for (let j = 0; j < size; j++) {
                     let idx = i * size + j;
                     let val = board[idx];
-
-                    // Rainbows (64) cannot merge with anything
                     if (val === 64) continue;
-
-                    // Check Right
                     if (j < size - 1 && val === board[idx + 1]) possible = true;
-                    // Check Down
                     if (i < size - 1 && val === board[idx + size]) possible = true;
-                    
                     if (possible) break;
                 }
                 if (possible) break;
             }
-
             if (!possible) {
                 sfx.fail(); 
                 overlay.style.display = 'flex';
