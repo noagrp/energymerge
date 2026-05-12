@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Energy Merge</title>
+    <style>
+        :root {
+            --bg-speed: 20s;
+        }
+
+        body {
+            /* Chameleon Background */
+            background: linear-gradient(45deg, #050508, #1a1025, #051a1a, #1a0505);
+            background-size: 400% 400%;
+            animation: chameleon var(--bg-speed) ease infinite;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        @keyframes chameleon {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #ui-top {
+            display: flex;
+            justify-content: space-between;
+            width: 340px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #score-display {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+
+        .restart-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .restart-btn:active { background: #fff; color: #000; }
+
+        #game-container {
+            position: relative;
+            width: 340px;
+            height: 340px;
+            background-color: rgba(13, 13, 26, 0.9);
+            border-radius: 15px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 8px;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: filter 0.5s ease;
+        }
+
+        .tile {
+            width: 58px;
+            height: 58px;
+            background-color: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .core { border-radius: 50%; filter: blur(2px); transition: all 0.2s; }
+
+        /* --- ENERGY TIER STYLES --- */
+        .t-2 { border: 2px solid #00d4ff; box-shadow: 0 0 15px #00d4ff; } 
+        .t-2 .core { background: #00d4ff; width: 25%; height: 25%; box-shadow: 0 0 15px #00d4ff; }
+
+        .t-4 { border: 2px solid #ff9d47; box-shadow: 0 0 20px #ff9d47; } 
+        .t-4 .core { background: #ff9d47; width: 40%; height: 40%; box-shadow: 0 0 20px #ff9d47; }
+
+        .t-8 { border: 2px solid #ffffff; box-shadow: 0 0 25px #ffffff; } 
+        .t-8 .core { background: #fff; width: 55%; height: 55%; box-shadow: 0 0 25px #fff; }
+
+        .t-16 { border: 2px solid #fffb00; box-shadow: 0 0 35px #fffb00; } 
+        .t-16 .core { background: #fffb00; width: 70%; height: 70%; box-shadow: 0 0 35px #fffb00; }
+
+        .t-32 { border: 2px solid #00d4ff; box-shadow: 0 0 45px #00d4ff; } 
+        .t-32 .core { background: #fff; width: 85%; height: 85%; box-shadow: 0 0 40px #fff; animation: surge 0.8s infinite alternate; }
+
+        /* RAINBOW OVERDRIVE (MAX) */
+        .t-64 { 
+            border: 3px solid #fff; 
+            box-shadow: 0 0 60px #fff; 
+            overflow: hidden;
+        }
+        .t-64 .core { 
+            width: 95%; height: 95%; 
+            background: linear-gradient(45deg, #ff0000, #ffcc00, #00ff00, #00ffff, #0000ff, #ff00ff);
+            background-size: 300% 300%;
+            animation: rainbow-flow 2s linear infinite, surge 0.4s infinite alternate;
+            filter: blur(1px);
+        }
+
+        @keyframes rainbow-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes surge { 
+            from { transform: scale(0.9); filter: brightness(1); } 
+            to { transform: scale(1.1); filter: brightness(1.6); } 
+        }
+
+        .pop { animation: pop 0.3s ease-out; z-index: 10; }
+        @keyframes pop { 0% { transform: scale(0.5); filter: brightness(5); } 100% { transform: scale(1); } }
+
+        /* OVERLAYS */
+        #overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            border-radius: 15px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        #info-panel {
+            margin-top: 20px;
+            width: 340px;
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .path { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 10px; }
+        .mini { width: 24px !important; height: 24px !important; border-radius: 4px !important; border-width: 1px !important; box-shadow: none !important; }
+        .mini .core { filter: blur(1px) !important; }
+        .val-text { font-size: 0.6rem; color: #888; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-top">
+        <div id="score-display">0</div>
+        <button class="restart-btn" onclick="initGame()">RESTART</button>
+    </div>
+
+    <div id="game-container">
+        <div id="overlay">
+            <h2 style="color: #ff0055; letter-spacing: 2px;">SYSTEM SATURATED</h2>
+            <button class="restart-btn" onclick="initGame()" style="padding: 15px 30px;">REBOOT</button>
+        </div>
+    </div>
+
+    <div id="info-panel">
+        <div class="path">
+            <div class="tile mini t-2"><div class="core"></div></div> <span class="val-text">2</span>
+            <div class="tile mini t-4"><div class="core"></div></div> <span class="val-text">4</span>
+            <div class="tile mini t-8"><div class="core"></div></div> <span class="val-text">8</span>
+            <div class="tile mini t-16"><div class="core"></div></div> <span class="val-text">16</span>
+            <div class="tile mini t-32"><div class="core"></div></div> <span class="val-text">32</span>
+            <div class="tile mini t-64"><div class="core"></div></div> <span class="val-text">MAX</span>
+        </div>
+        <div style="text-align: center; font-size: 0.7rem; color: #666; letter-spacing: 1px;">SWIPE OR ARROWS TO CONSOLIDATE ENERGY</div>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const gridDisplay = document.getElementById('game-container');
+        const scoreElement = document.getElementById('score-display');
+        const overlay = document.getElementById('overlay');
+        
+        let board = [];
+        let score = 0;
+        let mergedIndices = [];
+        const size = 5;
+
+        function playSound(freq, type, duration, vol) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.setValueAtTime(vol, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sfx = {
+            slide: () => playSound(150, 'triangle', 0.05, 0.03),
+            merge: (val) => playSound(200 + (val), 'sine', 0.2, 0.1),
+            fail: () => playSound(80, 'sawtooth', 1.2, 0.1)
+        };
+
+        function initGame() {
+            board = Array(size * size).fill(0);
+            score = 0;
+            scoreElement.innerText = "0";
+            overlay.style.display = 'none';
+            gridDisplay.style.filter = "none";
+            addTile(); addTile(); render();
+        }
+
+        function addTile() {
+            let empties = board.map((v, i) => v === 0 ? i : null).filter(v => v !== null);
+            if (empties.length > 0) {
+                board[empties[Math.floor(Math.random() * empties.length)]] = 2;
+            }
+        }
+
+        function render() {
+            const tiles = gridDisplay.querySelectorAll('.tile');
+            tiles.forEach(t => t.remove());
+            board.forEach((val, i) => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                if (val > 0) {
+                    tile.classList.add(`t-${val}`);
+                    const core = document.createElement('div');
+                    core.className = 'core';
+                    tile.appendChild(core);
+                    if (mergedIndices.includes(i)) tile.classList.add('pop');
+                }
+                gridDisplay.appendChild(tile);
+            });
+            mergedIndices = [];
+        }
+
+        function move(dir) {
+            let old = [...board];
+            mergedIndices = [];
+            let mergeOccurred = false;
+
+            for (let i = 0; i < size; i++) {
+                let line = [];
+                for (let j = 0; j < size; j++) {
+                    if (dir === 'L' || dir === 'R') line.push(board[i * size + j]);
+                    else line.push(board[j * size + i]);
+                }
+
+                const rev = (dir === 'R' || dir === 'D');
+                if (rev) line.reverse();
+                
+                let filtered = line.filter(v => v);
+                for (let k = 0; k < filtered.length - 1; k++) {
+                    // Only merge if both are identical AND less than 64
+                    if (filtered[k] !== 0 && filtered[k] === filtered[k+1] && filtered[k] < 64) {
+                        filtered[k] *= 2;
+                        filtered[k+1] = 0;
+                        score += (filtered[k] === 64 ? 100 : filtered[k]);
+                        scoreElement.innerText = score;
+                        mergeOccurred = true;
+                        
+                        let bIdx;
+                        let actK = rev ? (size - 1 - k) : k;
+                        if (dir === 'L' || dir === 'R') bIdx = i * size + actK;
+                        else bIdx = actK * size + i;
+                        mergedIndices.push(bIdx);
+                        sfx.merge(filtered[k]);
+                    }
+                }
+                filtered = filtered.filter(v => v);
+                while (filtered.length < size) filtered.push(0);
+                if (rev) filtered.reverse();
+
+                for (let j = 0; j < size; j++) {
+                    if (dir === 'L' || dir === 'R') board[i * size + j] = filtered[j];
+                    else board[j * size + i] = filtered[j];
+                }
+            }
+
+            if (old.join(',') !== board.join(',')) {
+                if (!mergeOccurred) sfx.slide();
+                addTile(); render(); checkOver();
+            }
+        }
+
+        function checkOver() {
+            // Check for empty spaces
+            if (board.includes(0)) return;
+
+            let possible = false;
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    let idx = i * size + j;
+                    let val = board[idx];
+
+                    // Rainbows (64) cannot merge with anything
+                    if (val === 64) continue;
+
+                    // Check Right
+                    if (j < size - 1 && val === board[idx + 1]) possible = true;
+                    // Check Down
+                    if (i < size - 1 && val === board[idx + size]) possible = true;
+                    
+                    if (possible) break;
+                }
+                if (possible) break;
+            }
+
+            if (!possible) {
+                sfx.fail(); 
+                overlay.style.display = 'flex';
+                gridDisplay.style.filter = "grayscale(1) brightness(0.4)";
+            }
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft') move('L');
+            if (e.key === 'ArrowRight') move('R');
+            if (e.key === 'ArrowUp') move('U');
+            if (e.key === 'ArrowDown') move('D');
+        });
+
+        let sX, sY;
+        window.addEventListener('touchstart', e => { sX = e.touches[0].clientX; sY = e.touches[0].clientY; }, {passive: true});
+        window.addEventListener('touchend', e => {
+            let dX = e.changedTouches[0].clientX - sX;
+            let dY = e.changedTouches[0].clientY - sY;
+            if (Math.abs(dX) > Math.abs(dY)) {
+                if (Math.abs(dX) > 30) move(dX > 0 ? 'R' : 'L');
+            } else {
+                if (Math.abs(dY) > 30) move(dY > 0 ? 'D' : 'U');
+            }
+        }, {passive: true});
+
+        initGame();
+    </script>
+</body>
+</html>
