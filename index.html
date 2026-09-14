@@ -1,381 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Energy Merge</title>
-    <style>
-        :root {
-            --bg-speed: 20s;
-        }
-
-        body {
-            /* Chameleon Background */
-            background: linear-gradient(45deg, #050508, #1a1025, #051a1a, #1a0505);
-            background-size: 400% 400%;
-            animation: chameleon var(--bg-speed) ease infinite;
-            color: #fff;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-            touch-action: none;
-        }
-
-        @keyframes chameleon {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        #ui-top {
-            display: flex;
-            justify-content: space-between;
-            width: 340px;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        #score-display {
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
-        }
-
-        .restart-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .restart-btn:active { background: #fff; color: #000; }
-
-        #game-container {
-            position: relative;
-            width: 340px;
-            height: 340px;
-            background-color: rgba(13, 13, 26, 0.9);
-            border-radius: 15px;
-            padding: 10px;
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(5, 1fr);
-            gap: 8px;
-            box-shadow: 0 0 50px rgba(0,0,0,1);
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: filter 0.5s ease;
-        }
-
-        .tile {
-            width: 58px;
-            height: 58px;
-            background-color: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        /* Sharp Solid Core */
-        .core { 
-            border-radius: 50%; 
-            filter: none; /* Removed blur for sharpness */
-            transition: all 0.2s; 
-            z-index: 2;
-        }
-
-        /* --- RUNNING NEON ANIMATION --- */
-        @keyframes neon-run {
-            0% { border-color: #ffffff; box-shadow: 0 0 5px #fff; }
-            25% { border-color: currentColor; box-shadow: 0 0 15px currentColor; }
-            50% { border-color: #ffffff; box-shadow: 0 0 5px #fff; }
-            75% { border-color: currentColor; box-shadow: 0 0 15px currentColor; }
-            100% { border-color: #ffffff; box-shadow: 0 0 5px #fff; }
-        }
-
-        /* --- ENERGY TIER STYLES --- */
-        .t-2 { 
-            color: #00d4ff;
-            border: 2px solid #00d4ff; 
-            animation: neon-run 2s linear infinite;
-        } 
-        .t-2 .core { background: #00d4ff; width: 30%; height: 30%; border: 1px solid #fff; }
-
-        .t-4 { 
-            color: #ff9d47;
-            border: 2px solid #ff9d47; 
-            animation: neon-run 1.8s linear infinite;
-        } 
-        .t-4 .core { background: #ff9d47; width: 45%; height: 45%; border: 1px solid #fff; }
-
-        .t-8 { 
-            color: #ffffff;
-            border: 2px solid #ffffff; 
-            animation: neon-run 1.5s linear infinite;
-        } 
-        .t-8 .core { background: #fff; width: 55%; height: 55%; border: 1px solid #00d4ff; }
-
-        .t-16 { 
-            color: #fffb00;
-            border: 2px solid #fffb00; 
-            animation: neon-run 1.2s linear infinite;
-        } 
-        .t-16 .core { background: #fffb00; width: 70%; height: 70%; border: 1px solid #fff; }
-
-        .t-32 { 
-            color: #00d4ff;
-            border: 2px solid #00d4ff; 
-            animation: neon-run 0.8s linear infinite, surge 0.8s infinite alternate;
-        } 
-        .t-32 .core { background: #fff; width: 85%; height: 85%; border: 2px solid #00d4ff; }
-
-        /* RAINBOW OVERDRIVE (MAX) */
-        .t-64 { 
-            color: #fff;
-            border: 3px solid #fff; 
-            animation: neon-run 0.5s linear infinite;
-        }
-        .t-64 .core { 
-            width: 95%; height: 95%; 
-            background: linear-gradient(45deg, #ff0000, #ffcc00, #00ff00, #00ffff, #0000ff, #ff00ff);
-            background-size: 300% 300%;
-            animation: rainbow-flow 2s linear infinite, surge 0.4s infinite alternate;
-            border: 1px solid #fff;
-        }
-
-        @keyframes rainbow-flow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes surge { 
-            from { transform: scale(0.9); } 
-            to { transform: scale(1.05); } 
-        }
-
-        .pop { animation: pop 0.3s ease-out; z-index: 10; }
-        @keyframes pop { 0% { transform: scale(0.5); } 100% { transform: scale(1); } }
-
-        /* OVERLAYS */
-        #overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            border-radius: 15px;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-        }
-
-        #info-panel {
-            margin-top: 20px;
-            width: 340px;
-            background: rgba(0,0,0,0.4);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .path { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 10px; }
-        .mini { width: 24px !important; height: 24px !important; border-radius: 4px !important; border-width: 1px !important; box-shadow: none !important; animation: none !important;}
-        .mini .core { filter: none !important; }
-        .val-text { font-size: 0.6rem; color: #888; font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#090a12">
+<title>Energy Merge</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--board:min(90vw,420px);--gap:clamp(5px,1.5vw,9px);--pad:clamp(8px,2vw,12px);--bg-speed:20s}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%}
+body{
+ margin:0;min-height:100vh;min-height:100dvh;overflow:hidden;touch-action:none;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ padding:max(14px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+ color:#fff;font-family:'Segoe UI',system-ui,sans-serif;
+ background:linear-gradient(45deg,#050508,#1a1025,#051a1a,#1a0505);
+ background-size:400% 400%;animation:chameleon var(--bg-speed) ease infinite;
+}
+@keyframes chameleon{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+#app{width:var(--board);max-width:100%;display:flex;flex-direction:column;gap:10px}
+#ui-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.score-wrap{display:flex;gap:14px;align-items:end}
+.stat .label{display:block;font-size:.62rem;letter-spacing:1.4px;color:#838899;font-weight:700}
+.stat .value{font-size:clamp(1.5rem,7vw,2.25rem);font-weight:900;line-height:1;text-shadow:0 0 20px rgba(0,212,255,.8)}
+.actions{display:flex;gap:7px}
+button{
+ border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;
+ min-height:40px;padding:8px 12px;border-radius:9px;font-weight:800;cursor:pointer
+}
+button:disabled{opacity:.35;cursor:default}
+button:active:not(:disabled){background:#fff;color:#000}
+#game-container{
+ position:relative;width:var(--board);height:var(--board);padding:var(--pad);display:grid;
+ grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:var(--gap);
+ background:rgba(13,13,26,.92);border:1px solid rgba(255,255,255,.1);border-radius:18px;
+ box-shadow:0 0 50px rgba(0,0,0,.85);transition:filter .35s ease
+}
+.tile{
+ min-width:0;min-height:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+ position:relative;overflow:hidden;border-radius:9px;background:rgba(255,255,255,.035)
+}
+.core{border-radius:50%;transition:all .2s;z-index:2}
+@keyframes neon-run{0%,50%,100%{border-color:#fff;box-shadow:0 0 5px #fff}25%,75%{border-color:currentColor;box-shadow:0 0 15px currentColor}}
+.t-2{color:#00d4ff;border:2px solid #00d4ff;animation:neon-run 2s linear infinite}.t-2 .core{background:#00d4ff;width:30%;height:30%;border:1px solid #fff}
+.t-4{color:#ff9d47;border:2px solid #ff9d47;animation:neon-run 1.8s linear infinite}.t-4 .core{background:#ff9d47;width:45%;height:45%;border:1px solid #fff}
+.t-8{color:#fff;border:2px solid #fff;animation:neon-run 1.5s linear infinite}.t-8 .core{background:#fff;width:55%;height:55%;border:1px solid #00d4ff}
+.t-16{color:#fffb00;border:2px solid #fffb00;animation:neon-run 1.2s linear infinite}.t-16 .core{background:#fffb00;width:70%;height:70%;border:1px solid #fff}
+.t-32{color:#00d4ff;border:2px solid #00d4ff;animation:neon-run .8s linear infinite,surge .8s infinite alternate}.t-32 .core{background:#fff;width:85%;height:85%;border:2px solid #00d4ff}
+.t-64{color:#fff;border:3px solid #fff;animation:neon-run .5s linear infinite}.t-64 .core{width:95%;height:95%;background:linear-gradient(45deg,#f00,#fc0,#0f0,#0ff,#00f,#f0f);background-size:300% 300%;animation:rainbow-flow 2s linear infinite,surge .4s infinite alternate;border:1px solid #fff}
+@keyframes rainbow-flow{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+@keyframes surge{from{transform:scale(.9)}to{transform:scale(1.05)}}
+.pop{animation:pop .3s ease-out;z-index:10}@keyframes pop{0%{transform:scale(.5)}100%{transform:scale(1)}}
+.spawn{animation:spawn .18s ease-out}@keyframes spawn{0%{transform:scale(.15);opacity:0}100%{transform:scale(1);opacity:1}}
+.screen{
+ position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ padding:24px;text-align:center;background:rgba(0,0,0,.88);border-radius:18px
+}
+.screen.hidden{display:none}
+.screen h1,.screen h2{margin:0 0 8px;letter-spacing:2px}
+.screen p{margin:4px 0 16px;color:#a8adba;font-size:.84rem;line-height:1.45}
+.screen .big{padding:13px 24px;font-size:1rem}
+#info-panel{
+ width:100%;background:rgba(0,0,0,.36);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.1)
+}
+.path{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.mini{width:24px!important;height:24px!important;border-radius:4px!important;border-width:1px!important;box-shadow:none!important;animation:none!important}
+.mini .core{filter:none!important}.val-text{font-size:.6rem;color:#888;font-weight:800}
+.hint{text-align:center;font-size:.68rem;color:#707584;letter-spacing:1px}
+@media(max-height:650px){#info-panel{display:none}:root{--board:min(78vh,88vw,380px)}}
+@media(prefers-reduced-motion:reduce){body,.t-2,.t-4,.t-8,.t-16,.t-32,.t-64,.t-64 .core{animation:none!important}}
+</style>
 </head>
 <body>
+<div id="app">
+ <div id="ui-top">
+  <div class="score-wrap">
+   <div class="stat"><span class="label">SCORE</span><span class="value" id="score-display">0</span></div>
+   <div class="stat"><span class="label">BEST</span><span class="value" id="best-display">0</span></div>
+  </div>
+  <div class="actions">
+   <button id="undoBtn" disabled>UNDO</button>
+   <button id="restartBtn">RESTART</button>
+  </div>
+ </div>
 
-    <div id="ui-top">
-        <div id="score-display">0</div>
-        <button class="restart-btn" onclick="initGame()">RESTART</button>
-    </div>
+ <div id="game-container">
+  <div id="startScreen" class="screen">
+   <h1>ENERGY MERGE</h1>
+   <p>Swipe or use arrow keys.<br>Merge matching energy. 64 is MAX.</p>
+   <button id="startBtn" class="big">TAP TO START</button>
+  </div>
+  <div id="gameOver" class="screen hidden">
+   <h2 style="color:#ff0055">SYSTEM SATURATED</h2>
+   <p id="finalScore"></p>
+   <button id="rebootBtn" class="big">REBOOT</button>
+  </div>
+ </div>
 
-    <div id="game-container">
-        <div id="overlay">
-            <h2 style="color: #ff0055; letter-spacing: 2px;">SYSTEM SATURATED</h2>
-            <button class="restart-btn" onclick="initGame()" style="padding: 15px 30px;">REBOOT</button>
-        </div>
-    </div>
+ <div id="info-panel">
+  <div class="path">
+   <div class="tile mini t-2"><div class="core"></div></div><span class="val-text">2</span>
+   <div class="tile mini t-4"><div class="core"></div></div><span class="val-text">4</span>
+   <div class="tile mini t-8"><div class="core"></div></div><span class="val-text">8</span>
+   <div class="tile mini t-16"><div class="core"></div></div><span class="val-text">16</span>
+   <div class="tile mini t-32"><div class="core"></div></div><span class="val-text">32</span>
+   <div class="tile mini t-64"><div class="core"></div></div><span class="val-text">MAX</span>
+  </div>
+  <div class="hint">SWIPE OR ARROWS TO CONSOLIDATE ENERGY</div>
+ </div>
+</div>
 
-    <div id="info-panel">
-        <div class="path">
-            <div class="tile mini t-2"><div class="core"></div></div> <span class="val-text">2</span>
-            <div class="tile mini t-4"><div class="core"></div></div> <span class="val-text">4</span>
-            <div class="tile mini t-8"><div class="core"></div></div> <span class="val-text">8</span>
-            <div class="tile mini t-16"><div class="core"></div></div> <span class="val-text">16</span>
-            <div class="tile mini t-32"><div class="core"></div></div> <span class="val-text">32</span>
-            <div class="tile mini t-64"><div class="core"></div></div> <span class="val-text">MAX</span>
-        </div>
-        <div style="text-align: center; font-size: 0.7rem; color: #666; letter-spacing: 1px;">SWIPE OR ARROWS TO CONSOLIDATE ENERGY</div>
-    </div>
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const gridDisplay=document.getElementById('game-container');
+const scoreElement=document.getElementById('score-display');
+const bestElement=document.getElementById('best-display');
+const startScreen=document.getElementById('startScreen');
+const gameOver=document.getElementById('gameOver');
+const finalScore=document.getElementById('finalScore');
+const undoBtn=document.getElementById('undoBtn');
+let board=[],score=0,mergedIndices=[],spawnedIndex=-1,previousState=null,started=false,locked=false;
+const size=5;
+let best=Number(localStorage.getItem('energymerge-best')||0);
+bestElement.textContent=best;
 
-    <script>
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const gridDisplay = document.getElementById('game-container');
-        const scoreElement = document.getElementById('score-display');
-        const overlay = document.getElementById('overlay');
-        
-        let board = [];
-        let score = 0;
-        let mergedIndices = [];
-        const size = 5;
+function enableAudio(){ if(audioCtx.state==='suspended') audioCtx.resume(); }
+function playSound(freq,type,duration,vol){
+ if(!started)return; enableAudio();
+ const osc=audioCtx.createOscillator(),g=audioCtx.createGain();
+ osc.type=type;osc.frequency.setValueAtTime(freq,audioCtx.currentTime);
+ g.gain.setValueAtTime(vol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+duration);
+ osc.connect(g);g.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+duration);
+}
+const sfx={slide:()=>playSound(150,'triangle',.05,.03),merge:v=>playSound(200+v,'sine',.2,.1),fail:()=>playSound(80,'sawtooth',1.2,.1)};
 
-        function playSound(freq, type, duration, vol) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            g.gain.setValueAtTime(vol, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-            osc.connect(g); g.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + duration);
-        }
+function newGame(){
+ board=Array(size*size).fill(0);score=0;previousState=null;mergedIndices=[];spawnedIndex=-1;locked=false;
+ scoreElement.textContent='0';gameOver.classList.add('hidden');gridDisplay.style.filter='none';undoBtn.disabled=true;
+ addTile();addTile();render();
+}
+function startGame(){ started=true;enableAudio();startScreen.classList.add('hidden');newGame(); }
+function savePrevious(){ previousState={board:[...board],score};undoBtn.disabled=false; }
+function undo(){
+ if(!previousState||locked)return;
+ board=[...previousState.board];score=previousState.score;scoreElement.textContent=score;
+ previousState=null;undoBtn.disabled=true;mergedIndices=[];spawnedIndex=-1;gameOver.classList.add('hidden');gridDisplay.style.filter='none';render();
+}
+function addTile(){
+ const empties=board.map((v,i)=>v===0?i:null).filter(v=>v!==null);
+ if(!empties.length)return;
+ spawnedIndex=empties[Math.floor(Math.random()*empties.length)];
+ board[spawnedIndex]=2;
+}
+function render(){
+ gridDisplay.querySelectorAll('.tile:not(.mini)').forEach(t=>t.remove());
+ board.forEach((val,i)=>{
+  const tile=document.createElement('div');tile.className='tile';
+  if(val>0){
+   tile.classList.add(`t-${val}`);
+   const core=document.createElement('div');core.className='core';tile.appendChild(core);
+   if(mergedIndices.includes(i))tile.classList.add('pop');
+   else if(i===spawnedIndex)tile.classList.add('spawn');
+  }
+  gridDisplay.appendChild(tile);
+ });
+ mergedIndices=[];spawnedIndex=-1;
+}
+function updateBest(){
+ if(score>best){best=score;localStorage.setItem('energymerge-best',String(best));bestElement.textContent=best;}
+}
+function move(dir){
+ if(!started||locked||!gameOver.classList.contains('hidden'))return;
+ const old=[...board],oldScore=score; mergedIndices=[]; let mergeOccurred=false;
+ for(let i=0;i<size;i++){
+  let line=[];
+  for(let j=0;j<size;j++)line.push((dir==='L'||dir==='R')?board[i*size+j]:board[j*size+i]);
+  const rev=dir==='R'||dir==='D'; if(rev)line.reverse();
+  let filtered=line.filter(v=>v);
+  for(let k=0;k<filtered.length-1;k++){
+   if(filtered[k]===filtered[k+1]&&filtered[k]<64){
+    filtered[k]*=2;filtered[k+1]=0;score+=filtered[k]===64?100:filtered[k];mergeOccurred=true;
+    let actK=rev?(size-1-k):k;
+    let idx=(dir==='L'||dir==='R')?i*size+actK:actK*size+i;
+    mergedIndices.push(idx);sfx.merge(filtered[k]);
+   }
+  }
+  filtered=filtered.filter(v=>v);while(filtered.length<size)filtered.push(0);if(rev)filtered.reverse();
+  for(let j=0;j<size;j++){if(dir==='L'||dir==='R')board[i*size+j]=filtered[j];else board[j*size+i]=filtered[j]}
+ }
+ if(old.join(',')!==board.join(',')){
+  previousState={board:old,score:oldScore};undoBtn.disabled=false;
+  if(!mergeOccurred)sfx.slide();
+  scoreElement.textContent=score;updateBest();addTile();render();checkOver();
+ }
+}
+function checkOver(){
+ if(board.includes(0))return;
+ for(let i=0;i<size;i++)for(let j=0;j<size;j++){
+  const idx=i*size+j,val=board[idx]; if(val===64)continue;
+  if((j<size-1&&val===board[idx+1])||(i<size-1&&val===board[idx+size]))return;
+ }
+ locked=true;sfx.fail();updateBest();
+ finalScore.innerHTML=`Score <strong>${score}</strong><br>Best <strong>${best}</strong>`;
+ gameOver.classList.remove('hidden');gridDisplay.style.filter='grayscale(1) brightness(.4)';
+}
+window.addEventListener('keydown',e=>{
+ if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))e.preventDefault();
+ if(e.key==='ArrowLeft')move('L');if(e.key==='ArrowRight')move('R');if(e.key==='ArrowUp')move('U');if(e.key==='ArrowDown')move('D');
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}
+});
+let sX=0,sY=0;
+window.addEventListener('touchstart',e=>{enableAudio();sX=e.touches[0].clientX;sY=e.touches[0].clientY},{passive:true});
+window.addEventListener('touchend',e=>{
+ if(!started)return;
+ const dX=e.changedTouches[0].clientX-sX,dY=e.changedTouches[0].clientY-sY;
+ if(Math.max(Math.abs(dX),Math.abs(dY))<28)return;
+ if(Math.abs(dX)>Math.abs(dY))move(dX>0?'R':'L');else move(dY>0?'D':'U');
+},{passive:true});
+document.getElementById('startBtn').onclick=startGame;
+document.getElementById('restartBtn').onclick=()=>{if(!started)startGame();else newGame()};
+document.getElementById('rebootBtn').onclick=()=>{locked=false;newGame()};
+undoBtn.onclick=undo;
+render();
 
-        const sfx = {
-            slide: () => playSound(150, 'triangle', 0.05, 0.03),
-            merge: (val) => playSound(200 + (val), 'sine', 0.2, 0.1),
-            fail: () => playSound(80, 'sawtooth', 1.2, 0.1)
-        };
-
-        function initGame() {
-            board = Array(size * size).fill(0);
-            score = 0;
-            scoreElement.innerText = "0";
-            overlay.style.display = 'none';
-            gridDisplay.style.filter = "none";
-            addTile(); addTile(); render();
-        }
-
-        function addTile() {
-            let empties = board.map((v, i) => v === 0 ? i : null).filter(v => v !== null);
-            if (empties.length > 0) {
-                board[empties[Math.floor(Math.random() * empties.length)]] = 2;
-            }
-        }
-
-        function render() {
-            const tiles = gridDisplay.querySelectorAll('.tile');
-            tiles.forEach(t => t.remove());
-            board.forEach((val, i) => {
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                if (val > 0) {
-                    tile.classList.add(`t-${val}`);
-                    const core = document.createElement('div');
-                    core.className = 'core';
-                    tile.appendChild(core);
-                    if (mergedIndices.includes(i)) tile.classList.add('pop');
-                }
-                gridDisplay.appendChild(tile);
-            });
-            mergedIndices = [];
-        }
-
-        function move(dir) {
-            let old = [...board];
-            mergedIndices = [];
-            let mergeOccurred = false;
-
-            for (let i = 0; i < size; i++) {
-                let line = [];
-                for (let j = 0; j < size; j++) {
-                    if (dir === 'L' || dir === 'R') line.push(board[i * size + j]);
-                    else line.push(board[j * size + i]);
-                }
-
-                const rev = (dir === 'R' || dir === 'D');
-                if (rev) line.reverse();
-                
-                let filtered = line.filter(v => v);
-                for (let k = 0; k < filtered.length - 1; k++) {
-                    if (filtered[k] !== 0 && filtered[k] === filtered[k+1] && filtered[k] < 64) {
-                        filtered[k] *= 2;
-                        filtered[k+1] = 0;
-                        score += (filtered[k] === 64 ? 100 : filtered[k]);
-                        scoreElement.innerText = score;
-                        mergeOccurred = true;
-                        
-                        let bIdx;
-                        let actK = rev ? (size - 1 - k) : k;
-                        if (dir === 'L' || dir === 'R') bIdx = i * size + actK;
-                        else bIdx = actK * size + i;
-                        mergedIndices.push(bIdx);
-                        sfx.merge(filtered[k]);
-                    }
-                }
-                filtered = filtered.filter(v => v);
-                while (filtered.length < size) filtered.push(0);
-                if (rev) filtered.reverse();
-
-                for (let j = 0; j < size; j++) {
-                    if (dir === 'L' || dir === 'R') board[i * size + j] = filtered[j];
-                    else board[j * size + i] = filtered[j];
-                }
-            }
-
-            if (old.join(',') !== board.join(',')) {
-                if (!mergeOccurred) sfx.slide();
-                addTile(); render(); checkOver();
-            }
-        }
-
-        function checkOver() {
-            if (board.includes(0)) return;
-            let possible = false;
-            for (let i = 0; i < size; i++) {
-                for (let j = 0; j < size; j++) {
-                    let idx = i * size + j;
-                    let val = board[idx];
-                    if (val === 64) continue;
-                    if (j < size - 1 && val === board[idx + 1]) possible = true;
-                    if (i < size - 1 && val === board[idx + size]) possible = true;
-                    if (possible) break;
-                }
-                if (possible) break;
-            }
-            if (!possible) {
-                sfx.fail(); 
-                overlay.style.display = 'flex';
-                gridDisplay.style.filter = "grayscale(1) brightness(0.4)";
-            }
-        }
-
-        window.addEventListener('keydown', e => {
-            if (e.key === 'ArrowLeft') move('L');
-            if (e.key === 'ArrowRight') move('R');
-            if (e.key === 'ArrowUp') move('U');
-            if (e.key === 'ArrowDown') move('D');
-        });
-
-        let sX, sY;
-        window.addEventListener('touchstart', e => { sX = e.touches[0].clientX; sY = e.touches[0].clientY; }, {passive: true});
-        window.addEventListener('touchend', e => {
-            let dX = e.changedTouches[0].clientX - sX;
-            let dY = e.changedTouches[0].clientY - sY;
-            if (Math.abs(dX) > Math.abs(dY)) {
-                if (Math.abs(dX) > 30) move(dX > 0 ? 'R' : 'L');
-            } else {
-                if (Math.abs(dY) > 30) move(dY > 0 ? 'D' : 'U');
-            }
-        }, {passive: true});
-
-        initGame();
-    </script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js'))}
+</script>
 </body>
 </html>
